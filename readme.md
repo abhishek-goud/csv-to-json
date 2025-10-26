@@ -1,11 +1,11 @@
 # CSV TO JSON (Kelp Service)
 
-## Implementation (concise)
+## Implementation 
 - Express.js REST API with two endpoints:
   - GET /api/process-csv — parse CSV -> JS objects -> save to DB
   - GET /check-status — simple health check
 
-## Bulk-insert approach (chosen)
+## Bulk-insert approach 
 - Batched multi-row parameterized INSERTs (simpler, reliable):
   - Default batch size: 1000 rows per INSERT (configurable in code)
   - All batches run inside a transaction; COMMIT on success, ROLLBACK on error
@@ -16,7 +16,7 @@
 - CSV parsed in memory per batch; large files are chunked into user arrays before insert
 - Single DB transaction encloses all batches for atomicity
 
-## Project structure (key files)
+## Project structure 
 - config/app.config.js — configuration (port, csv path, batch size)
 - config/database.js — Postgres connection & helper (getClient, query)
 - controllers/user.controller.js — CSV parsing and batching logic
