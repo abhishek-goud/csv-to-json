@@ -1,4 +1,4 @@
-# CSV TO JSON (Kelp Service)
+# CSV TO JSON 
 
 ## Implementation 
 - Express.js REST API with two endpoints:
