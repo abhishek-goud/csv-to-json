@@ -1,7 +1,4 @@
 const { getClient, query } = require("../config/database");
-const { Readable } = require('stream');
-const copyFrom = require('pg-copy-streams').from;
-
 
 // Create the users table if not exists
 const createTable = async () => {
@@ -22,30 +19,41 @@ const truncate = async () => {
   await query("TRUNCATE TABLE users RESTART IDENTITY");
 };
 
-// Batch insert with transaction
+// insert with transaction (simpler batched multi-row INSERT)
 const insertUsers = async (users) => {
+  if (!Array.isArray(users) || users.length === 0) return;
   const client = await getClient();
+  const BATCH_SIZE = 1000;
 
   try {
     await client.query("BEGIN");
 
-    const insertQuery = `
-      INSERT INTO users (name, age, address, additional_info)
-      VALUES ($1, $2, $3, $4)
-    `;
+    for (let offset = 0; offset < users.length; offset += BATCH_SIZE) {
+      const chunk = users.slice(offset, offset + BATCH_SIZE);
 
-    for (const user of users) {
-      await client.query(insertQuery, [
-        user.name,
-        user.age,
-        user.address,
-        user.additional_info,
-      ]);
+      const params = [];
+      const placeholders = chunk.map((u, idx) => {
+        const base = idx * 4;
+        // push values in same order as columns
+        params.push(
+          u.name ?? null,
+          u.age ?? null,
+          u.address ?? null,
+          u.additional_info ?? null
+        );
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`;
+      }).join(", ");
+
+      const sql = `
+        INSERT INTO users (name, age, address, additional_info)
+        VALUES ${placeholders}
+      `;
+      await client.query(sql, params);
     }
 
     await client.query("COMMIT");
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     client.release();
