@@ -14,4 +14,4 @@
 
 ### Technical Assumptions
 - CSV file path is configured externally
-- Synchronous file operations
+- CSV data is parsed in JavaScript Object and then saved to the database.
